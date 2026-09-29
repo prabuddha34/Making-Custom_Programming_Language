@@ -1,0 +1,19 @@
+
+EXPRESSION
+    : TERM
+    | EXPRESSION "+" TERM
+    | EXPRESSION "-" TERM
+    ;
+
+
+TERM
+    : FACTOR
+    | TERM "*" FACTOR
+    | TERM "/" FACTOR
+    ;
+
+
+FACTOR
+    : NUMBER
+    | "(" EXPRESSION ")"
+    ;
