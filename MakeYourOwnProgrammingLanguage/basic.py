@@ -15,22 +15,26 @@ TT_RPAREN = 'TT_RPAREN'
 
 TT_EOF = 'TT_EOF'
 
+#Digits holder baby
 DIGITS = '0123456789'
 
 
+#Custom Functions of my language
+TT_POW='POW'
+TT_SQRT='SQRT'
+TT_CUBE='CUBE'
+TT_EVEN_CHECK='EVEN_CHECK'
+TT_ODD_CHECK='ODD_CHECK'
+TT_ABS='ABS'
+
+
+
 class Token:
-    def __init__(self, type_, value=None, pos_start=None, pos_end=None):
+    def __init__(self, type_, value=None, line=None, column=None):
         self.type = type_
         self.value = value
-
-        if pos_start:
-            self.pos_start = pos_start.copy()
-            self.pos_end = pos_start.copy()
-
-            if pos_end:
-                self.pos_end = pos_end.copy()
-
-            self.pos_end.advance()
+        self.line = line
+        self.column = column
 
     def __repr__(self):
         if self.value is not None:
@@ -42,8 +46,10 @@ class Token:
 # Errors
 #########
 
-class Error:
+class Error(Exception):
     def __init__(self, error_name, details, line, column):
+        super().__init__(details)
+
         self.error_name = error_name
         self.details = details
         self.line = line
@@ -54,7 +60,6 @@ class Error:
             f"{self.error_name}: {self.details} "
             f"(Line {self.line}, Column {self.column})"
         )
-
 
 class IllegalCharError(Error):
     def __init__(self, details, line, column):
@@ -76,6 +81,17 @@ class InvalidSyntaxError(Error):
         )
 
 
+####Making of the RunTime  error of the value so that we can make the RunTime error of the runTime error
+
+class RunTimeError(Error):
+    def __init__(self, details, line, column):
+        super().__init__(
+            "Run Time Error",
+            details,
+            line,
+            column
+        )
+
 ##########################
 # LEXER
 ##########################
@@ -95,6 +111,7 @@ class Lexer:
         self.pos += 1
 
         if self.pos < len(self.text):
+
             self.curr = self.text[self.pos]
 
             if self.curr == '\n':
@@ -102,10 +119,12 @@ class Lexer:
                 self.column = 0
             else:
                 self.column += 1
+
         else:
             self.curr = None
 
     def lets_cook_tokens(self):
+
         tokens = []
         errors = []
 
@@ -115,33 +134,182 @@ class Lexer:
                 self.advance()
 
             elif self.curr == '+':
-                tokens.append(Token(TT_PLUS, '+'))
+
+                tokens.append(
+                    Token(
+                        TT_PLUS,
+                        '+',
+                        self.line,
+                        self.column
+                    )
+                )
+
                 self.advance()
 
             elif self.curr == '-':
-                tokens.append(Token(TT_MINUS, '-'))
+
+                tokens.append(
+                    Token(
+                        TT_MINUS,
+                        '-',
+                        self.line,
+                        self.column
+                    )
+                )
+
                 self.advance()
 
             elif self.curr == '*':
-                tokens.append(Token(TT_MUL, '*'))
+
+                tokens.append(
+                    Token(
+                        TT_MUL,
+                        '*',
+                        self.line,
+                        self.column
+                    )
+                )
+
                 self.advance()
 
             elif self.curr == '/':
-                tokens.append(Token(TT_DIV, '/'))
+
+                tokens.append(
+                    Token(
+                        TT_DIV,
+                        '/',
+                        self.line,
+                        self.column
+                    )
+                )
+
                 self.advance()
 
             elif self.curr == '(':
-                tokens.append(Token(TT_LPAREN, '('))
+
+                tokens.append(
+                    Token(
+                        TT_LPAREN,
+                        '(',
+                        self.line,
+                        self.column
+                    )
+                )
+
                 self.advance()
 
             elif self.curr == ')':
-                tokens.append(Token(TT_RPAREN, ')'))
+
+                tokens.append(
+                    Token(
+                        TT_RPAREN,
+                        ')',
+                        self.line,
+                        self.column
+                    )
+                )
+
                 self.advance()
 
             elif self.curr.isdigit():
-                tokens.append(self.make_numbers_lol())
+
+                tokens.append(
+                    self.make_numbers_lol()
+                )
+
+            elif self.curr == '^':
+
+                tokens.append(
+                    Token(
+                        TT_POW,
+                        '^',
+                        self.line,
+                        self.column
+                    )
+                )
+
+                self.advance()
+
+            elif self.curr.isalpha():
+
+                word = ''
+
+                start_line = self.line
+                start_column = self.column
+
+                while self.curr != None and (self.curr.isalpha() or self.curr == '_'):
+
+                    word += self.curr
+
+                    self.advance()
+
+                if word == 'cube': #hell nah for cubes we loves cube a^3
+
+                    tokens.append(
+                        Token(
+                            TT_CUBE,
+                            'cube',
+                            start_line,
+                            start_column
+                        )
+                    )
+
+                elif word == 'sqrt': #this one is for the sqrt ok ?
+
+                    tokens.append(
+                        Token(
+                            TT_SQRT,
+                            'sqrt',
+                            start_line,
+                            start_column
+                        )
+                    )
+
+                elif word == 'even_check': #here it is the token to make a custom check for my program of even number
+
+                    tokens.append(
+                        Token(
+                            TT_EVEN_CHECK,
+                            'even_check',
+                            start_line,
+                            start_column
+                        )
+                    )
+
+                elif word=='odd_check': #i love to do the alternate ones bro that is why ODD baby
+
+                    tokens.append(
+                        Token(
+                            TT_ODD_CHECK,
+                            "odd_check",
+                            start_line,
+                            start_column
+                        )
+                    )
+
+                elif word == 'abs': #absolute value of it and it means positive to be positive and negative to be positive
+
+                    tokens.append(
+                        Token(
+                            TT_ABS,
+                            'abs',
+                            start_line,
+                            start_column
+                        )
+                    )
+
+                else:
+
+                    errors.append(
+                        IllegalCharError(
+                            f"'{word}'",
+                            start_line,
+                            start_column
+                        )
+                    )
 
             else:
+
                 errors.append(
                     IllegalCharError(
                         f"'{self.curr}'",
@@ -149,6 +317,7 @@ class Lexer:
                         self.column
                     )
                 )
+
                 self.advance()
 
         tokens.append(Token(TT_EOF))
@@ -160,39 +329,45 @@ class Lexer:
         num_str = ''
         dot_count = 0
 
+        start_line = self.line
+        start_column = self.column
+
         while self.curr != None and self.curr in DIGITS + '.':
 
             if self.curr == '.':
+
                 if dot_count == 1:
                     break
 
                 dot_count += 1
 
             num_str += self.curr
+
             self.advance()
 
         if dot_count == 0:
-            return Token(TT_INT, int(num_str))
 
-        return Token(TT_FLOAT, float(num_str))
+            return Token(
+                TT_INT,
+                int(num_str),
+                start_line,
+                start_column
+            )
+
+        return Token(
+            TT_FLOAT,
+            float(num_str),
+            start_line,
+            start_column
+        )
 
 
 ##########################
-# RUN
+# NODES
 ##########################
-
-def run(text):
-    lexer = Lexer(text)
-    tokens, errors = lexer.lets_cook_tokens()
-
-    return tokens, errors
-
-
-######
-# Nodes
-########
 
 class NumberNodes:  # Hey lol so this is for th Numbers in our language
+
     def __init__(self, tok):
         self.tok = tok
 
@@ -201,6 +376,7 @@ class NumberNodes:  # Hey lol so this is for th Numbers in our language
 
 
 class BinOp:  # and this is for the binary ops such as 1+2 like this !!
+
     def __init__(self, left_node, op_token, right_node):
         self.left_node = left_node
         self.op_token = op_token
@@ -209,7 +385,42 @@ class BinOp:  # and this is for the binary ops such as 1+2 like this !!
     def __repr__(self):
         return f'({self.left_node} {self.op_token} {self.right_node})'
 
-        # here left means 1+2 so here left is 1 and op_token is '+' ok? and 2 is the right node
+
+class UnaryOp:
+
+    def __init__(self, op_token, node):
+        self.op_token = op_token
+        self.node = node
+
+    def __repr__(self):
+        return f'({self.op_token}{self.node})'
+
+
+class EvenCheckForReal:
+
+    def __init__(self,node):
+        self.node=node
+
+    def __repr__(self):
+        return f'[Even Baby]{self.node}'
+
+
+class OddCheckForReal:
+
+    def __init__(self,node):
+        self.node=node
+
+    def __repr__(self):
+        return f'[Odd Baby]{self.node}'
+
+
+class AbsForReal:
+
+    def __init__(self,node):
+        self.node=node
+
+    def __repr__(self):
+        return f'[Absolute Baby]{self.node}'
 
 
 ######## Parser Result
@@ -218,6 +429,7 @@ class BinOp:  # and this is for the binary ops such as 1+2 like this !!
 ########### Helps to check that the parser result is true or not ?
 
 class ParserResult:
+
     def __init__(self):
         self.error = None
         self.node = None
@@ -235,11 +447,15 @@ class ParserResult:
         return res
 
     def success(self, node):
+
         self.node = node
+
         return self
 
     def failure(self, error):
+
         self.error = error
+
         return self
 
 
@@ -251,72 +467,247 @@ class ParserResult:
 ###############################
 
 class Parser:
+
     def __init__(self, tokens):
+
         self.tokens = tokens
         self.tok_idx = -1
         self.current_tok = None
+
         self.advance()
 
     def advance(self):
+
         self.tok_idx += 1
 
         if self.tok_idx < len(self.tokens):
+
             self.current_tok = self.tokens[self.tok_idx]
+
         else:
+
             self.current_tok = None
 
-    def factor(self):
+    def atom(self):
 
         res = ParserResult()
+
         tok = self.current_tok
 
-        if tok.type in (TT_INT, TT_FLOAT):  # checking the data type of it
+        if tok.type in (TT_INT, TT_FLOAT):
 
-            self.advance()  # go to the next node
+            self.advance()
 
             return res.success(
                 NumberNodes(tok)
-            )  # of the value this is the
+            )
+
+        if tok.type == TT_LPAREN:
+
+            self.advance()
+
+            expr = res.registers(
+                self.expr()
+            )
+
+            if res.error:
+                return res
+
+            if self.current_tok.type == TT_RPAREN:
+
+                self.advance()
+
+                return res.success(expr.node)
+
+            return res.failure(
+                InvalidSyntaxError(
+                    "Expected ')'",
+                    tok.line,
+                    tok.column
+                )
+            )
 
         return res.failure(
             InvalidSyntaxError(
-                "Expected number",
-                tok.line if hasattr(tok, 'line') else 1,
-                tok.column if hasattr(tok, 'column') else 0
+                "Expected number or '('",
+                tok.line,
+                tok.column
             )
         )
 
-    def bin_op(self, func, ops):
+    def cubeatom(self):
 
-     res = ParserResult()
+        res = ParserResult()
 
-     left = res.registers(func())
-
-     if res.error:
-         return res
-
-     left = left.node
-
-     while self.current_tok.type in ops:
-
-        op_tok = self.current_tok
-
-        self.advance()
-
-        right = res.registers(func())
+        left = res.registers(
+            self.power()
+        )
 
         if res.error:
             return res
 
-        right = right.node
+        left = left.node
 
-        left = BinOp(
-            left,
-            op_tok,
-            right
+        while self.current_tok.type == TT_CUBE:
+
+            op_tok = self.current_tok
+
+            self.advance()
+
+            left = BinOp(
+                left,
+                op_tok,
+                left
+            )
+
+        return res.success(left)
+
+    def power(self):
+
+        return self.bin_op(
+            self.atom,
+            (TT_POW,)
         )
 
-     return res.success(left)
+    def factor(self):
+
+        res = ParserResult()
+
+        tok = self.current_tok
+
+        if tok.type in (TT_PLUS, TT_MINUS):
+
+            self.advance()
+
+            factor = res.registers(
+                self.factor()
+            )
+
+            if res.error:
+                return res
+
+            return res.success(
+                UnaryOp(
+                    tok,
+                    factor.node
+                )
+            )
+
+        if tok.type == TT_SQRT:
+
+            self.advance()
+
+            number = res.registers(
+                self.factor()
+            )
+
+            if res.error:
+                return res
+
+            return res.success(
+                BinOp(
+                    number.node,
+                    Token(
+                        TT_POW,
+                        '^',
+                        tok.line,
+                        tok.column
+                    ),
+                    NumberNodes(
+                        Token(
+                            TT_FLOAT,
+                            0.5,
+                            tok.line,
+                            tok.column
+                        )
+                    )
+                )
+            )
+
+        if tok.type == TT_EVEN_CHECK:
+
+            self.advance()
+
+            number = res.registers(
+                self.factor()
+            )
+
+            if res.error:
+                return res
+
+            return res.success(
+                EvenCheckForReal(
+                    number.node
+                )
+            )
+
+        if tok.type == TT_ODD_CHECK:
+
+            self.advance()
+
+            number = res.registers(
+                self.factor()
+            )
+
+            if res.error:
+                return res
+
+            return res.success(
+                OddCheckForReal(
+                    number.node
+                )
+            )
+
+        if tok.type == TT_ABS:
+
+            self.advance()
+
+            number = res.registers(
+                self.factor()
+            )
+
+            if res.error:
+                return res
+
+            return res.success(
+                AbsForReal(
+                    number.node
+                )
+            )
+
+        return self.cubeatom()
+
+    def bin_op(self, func, ops):
+
+        res = ParserResult()
+
+        left = res.registers(func())
+
+        if res.error:
+            return res
+
+        left = left.node
+
+        while self.current_tok.type in ops:
+
+            op_tok = self.current_tok
+
+            self.advance()
+
+            right = res.registers(func())
+
+            if res.error:
+                return res
+
+            right = right.node
+
+            left = BinOp(
+                left,
+                op_tok,
+                right
+            )
+
+        return res.success(left)
 
     def term(self):
 
@@ -345,13 +736,141 @@ class Parser:
 
             return res.failure(
                 InvalidSyntaxError(
-                    "Expected '+', '-', '*', '/' or end of expression",
-                    1,
-                    0
+                    "Expected '+', '-', '*', '/', '^', 'cube' or end of expression",
+                    self.current_tok.line,
+                    self.current_tok.column
                 )
             )
 
         return res
+
+
+##########################
+# INTERPRETER MAKING OF IT
+##########################
+
+class Interpreter:
+
+    def visit(self, node):
+
+        method_name = f'visit{type(node).__name__}'
+
+        method = getattr(
+            self,
+            method_name,
+            self.no_visit_method
+        )
+
+        return method(node)
+
+    def no_visit_method(self, node):
+
+        raise Exception(
+            f'No visit{type(node).__name__} method defined!'
+        )
+
+    def visitNumberNodes(self, node):
+
+        return node.tok.value
+
+    def visitEvenCheckForReal(self, node):
+
+        number = self.visit(node.node)
+
+        return number % 2 == 0
+
+    def visitOddCheckForReal(self, node):
+
+        number = self.visit(node.node)
+
+        return number % 2 != 0
+
+    def visitAbsForReal(self, node):
+
+        number = self.visit(node.node)
+
+        return abs(number)
+
+    def visitBinOp(self, node):
+
+        left = self.visit(node.left_node)
+        right = self.visit(node.right_node)
+
+        if node.op_token.type == TT_PLUS:
+
+            return left + right
+
+        elif node.op_token.type == TT_MINUS:
+
+            return left - right
+
+        elif node.op_token.type == TT_MUL:
+
+            return left * right
+
+        elif node.op_token.type == TT_DIV:
+
+            if right == 0:
+                return "Are u dumb to divide by 0?bro?hell nah >< It is an ERROR "
+
+            return left / right
+
+        elif node.op_token.type == TT_POW:
+
+            return left ** right
+
+        elif node.op_token.type == TT_CUBE:
+
+            return left * left * left
+
+    def visitUnaryOp(self, node):
+
+        number = self.visit(node.node)
+
+        if node.op_token.type == TT_MINUS:
+
+            return -number
+
+        elif node.op_token.type == TT_PLUS:
+
+            return number
+
+
+##########################
+# RUN
+##########################
+
+def run(text):
+
+    lexer = Lexer(text)
+
+    tokens, errors = lexer.lets_cook_tokens()
+
+    if errors:
+        return None, errors
+
+    # MAKING OF AST
+
+    parser = Parser(tokens)
+
+    ast = parser.parse()
+
+    if ast.error:
+        return None, [ast.error]
+
+    # CHECK THE INTERPRETER FOR ME LOL
+
+    interpreter = Interpreter()
+
+    try:
+
+        result = interpreter.visit(ast.node)
+
+        return result, None
+
+    except RunTimeError as error:
+
+        return None, [error]
 
 
 ##########################
@@ -363,14 +882,17 @@ while True:
     text = input("PraxLang >>> ")
 
     if text == "exit":
+
         print("Bye 👋")
+
         break
 
-    tokens, errors = run(text)
+    result, errors = run(text)
 
     if errors:
 
         for error in errors:
+
             print(
                 f"\033[91m[ERROR]\033[0m "
                 f"{error.as_String()}"
@@ -378,19 +900,7 @@ while True:
 
     else:
 
-        parser = Parser(tokens)
-        result = parser.parse()
-
-        if result.error:
-
-            print(
-                f"\033[91m[ERROR]\033[0m "
-                f"{result.error.as_String()}"
-            )
-
-        else:
-
-            print(
-                f"\033[92m[AST]\033[0m "
-                f"{result.node}"
-            )
+        print(
+            f"\033[92m[RESULT]\033[0m "
+            f"{result}"
+        )
