@@ -1,0 +1,21 @@
+EXPRESSION : TERM
+           | EXPRESSION "+" TERM
+           | EXPRESSION "-" TERM
+           ;
+
+TERM       : POWER
+           | TERM "*" POWER
+           | TERM "/" POWER
+           ;
+
+POWER      : FACTOR
+           | FACTOR "^" POWER
+           ;
+
+FACTOR     : NUMBER
+           | "(" EXPRESSION ")"
+           ;
+
+NUMBER     : INT
+           | FLOAT
+           ;
