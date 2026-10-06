@@ -1,9 +1,9 @@
 ######################
 # TOKENS
 ######################
-import  string
-import  string
+import string
 import sys
+import os
 
 TT_INT = 'TT_INT'
 TT_FLOAT = 'TT_FLOAT'
@@ -28,10 +28,28 @@ TT_IDENTIFIER='TT_IDENTIFIER'
 TT_KEYWORD='TT_KEYWORD'
 TT_EQ='TT_EQ'
 
+#Custom token about my own gf (my cutie little girl)and I really love her
+
+TT_SRI='TT_SRI'
+
 KEYWORDS=[
-    "V" #for naming the varaible
+    "V", #for naming the varaible,
+    "AND", # this is the and one
+    "OR", #this is the or one
+    "NOT",#thi is the not one
+    "IF", #If stament key word
+    "THEN", #goes after the IF / ELIF condition
+    "ELIF", #else if ladder
+    "ELSE", #here the else block will be executed of there
+    "FOR",
+    "TO",
+    "WHILE",
+    "PRINT",
+    "print"
 ]
 #add some realtional and conditional ones in my language so get them ok?
+#we want that in our language ! and say 0 be false and 1 be true !
+#and is both are true abd or is any one statement is true !
 
 TT_EQEQ = 'TT_EQEQ' # ==
 TT_NE = 'TT_NE' #!=
@@ -267,15 +285,19 @@ class Lexer:
                 self.advance()
 
             elif self.curr == '=': #so we are getting the eqaul for making v <variable_name> = <expr>/<value>ok?
-                tokens.append(
-                    Token(
-                        TT_EQ,
-                        '=',
-                        self.line,
-                        self.column
-                    )
-                )
-                self.advance()
+                #this one also checks for == now so only ONE = branch lives here
+                tokens.append(self.make_equals())
+
+            elif self.curr =='!':
+                tok,error=self.make_not_equals() #get the ! equal function of it !
+                if error:return [],[error]
+                tokens.append(tok)
+
+            elif self.curr == '>': #so we are getting the >= one
+                tokens.append(self.make_more_than())
+
+            elif self.curr == '<': #so we are getting the <= one
+                tokens.append(self.make_less_than())
 
             elif self.curr in LETTERS + '_':
 
@@ -314,6 +336,16 @@ class Lexer:
                         Token(
                             TT_EVEN_CHECK,
                             'even_check',
+                            start_line,
+                            start_column
+                        )
+                    )
+
+                elif word =="SRI": #It is getting tthe token about my cute little girl
+                    tokens.append(
+                        Token(
+                            TT_SRI,
+                            "SRI",
                             start_line,
                             start_column
                         )
@@ -398,6 +430,51 @@ class Lexer:
             start_line,
             start_column
         )
+
+    def make_equals(self):
+        #so we are getting the == one function over here ! (single = stays TT_EQ for variables)
+        line, col = self.line, self.column
+        self.advance()
+
+        if self.curr == '=':
+            self.advance()
+            return Token(TT_EQEQ, '==', line, col)
+
+        return Token(TT_EQ, '=', line, col)
+
+    def make_not_equals(self):
+        line, col = self.line, self.column
+        self.advance()
+
+        if self.curr == '=':
+            self.advance()
+            return Token(TT_NE, '!=', line, col), None #the second part is for the error ok ?
+
+        return None, InvalidSyntaxError("Expected '=' after '!'", line, col) #now it is a real Error object so run() can print it !
+
+    def make_less_than(self):
+        line, col = self.line, self.column #so we are getting the <= one function over here !
+        self.advance()
+
+        if self.curr == '=': #so checking it and calling the = function !
+            self.advance()
+            return Token(TT_LTE, '<=', line, col)
+
+        return Token(TT_LT, '<', line, col)
+
+    def make_more_than(self):
+        line, col = self.line, self.column #so we are getting the >= one function over here !
+        self.advance()
+
+        if self.curr == '=': #so checking it and calling the = function !
+            self.advance()
+            return Token(TT_GTE, '>=', line, col)
+
+        return Token(TT_GT, '>', line, col)
+
+
+
+
     def make_identifier(self):
         id_start='' #getting the start of it ?
         start_line=self.line
@@ -415,6 +492,38 @@ class Lexer:
 ##########################
 # NODES
 ##########################
+#we neeed the for loop and the while loop in my lang so lol i am gonna make it yeah
+#tmy project is getting kinda cool I AM LOVING it i am getting to YOU Terry Davis
+
+class ForNode:
+    def __init__(self,var_name,start_token,end_value_Node,step_value,Body_Node):
+        #takign all of these vals lol !
+        self.var_name=var_name
+        self.start_token=start_token
+        self.end_value_Node=end_value_Node
+        self.step_value=step_value
+        self.Body_Node=Body_Node
+class WhileNode: #getting the values for the while lOOp yeahhh !
+    def __init__(self,condition_Node,body_Node):
+        self.condition_Node=condition_Node
+        self.body_Node=body_Node
+
+class PrintNode:
+    def __init__(self,node):
+        self.node=node
+
+    def __repr__(self):
+        return f'(print {self.node})'
+
+
+class IfNode:
+    def __init__(self,cases,else_case):
+        self.cases=cases
+        self.else_case=else_case #getting thr if part and the else part of it !
+
+    def __repr__(self):
+        return f'(if {self.cases} else {self.else_case})' #return th value expression that we are getting !
+
 
 class NumberNodes:  # Hey lol so this is for th Numbers in our language
 
@@ -489,6 +598,12 @@ class OddCheckForReal:
     def __repr__(self):
         return f'[Odd Baby]{self.node}'
 
+
+class SriForReal: #it is the class name about my cute little girl and i love her !
+    def __init__(self,node):
+        self.node=node
+    def __repr__(self):
+        return f'[Sri my Cutie Little princess]{self.node}'
 
 class AbsForReal:
 
@@ -570,6 +685,20 @@ class Parser:
 
         tok = self.current_tok
 
+        if tok.matches(TT_KEYWORD,"IF"):
+            return self.if_expr() #parsing it in my parser and getting the if staemtnt out of ut !
+
+        if tok.matches(TT_KEYWORD,"print") or tok.matches(TT_KEYWORD,"PRINT"):
+            self.advance()
+
+            value = res.registers(self.expr())
+
+            if res.error:
+                return res
+
+            return res.success(PrintNode(value.node))
+
+
         if tok.type == TT_IDENTIFIER:
             self.advance()
             return res.success(VariableAccessNode(tok))
@@ -581,6 +710,14 @@ class Parser:
             return res.success(
                 NumberNodes(tok)
             )
+        #getting the token of the for and the while loop
+
+        if tok.matches(TT_KEYWORD,'FOR'):
+            return self.for_expr() #callin our for_expr() function
+
+        if tok.matches(TT_KEYWORD,'WHILE'):
+            return self.while_expr() #getting the while_expr() function
+
 
         if tok.type == TT_LPAREN:
 
@@ -589,6 +726,7 @@ class Parser:
             expr = res.registers(
                 self.expr()
             )
+
 
             if res.error:
                 return res
@@ -607,11 +745,187 @@ class Parser:
                 )
             )
 
+
         return res.failure(
             InvalidSyntaxError(
-                "Expected number, variable or '('",
+                "Expected number, variable, print, if, for, while or '('",
                 tok.line,
                 tok.column
+            )
+        )
+
+    def if_expr(self):
+        res = ParserResult()
+        cases = []
+        else_case = None
+
+        self.advance() #skip the IF staatemnt !
+
+
+        condition = res.registers(self.expr())
+        if res.error: return res
+
+        if not self.current_tok.matches(TT_KEYWORD, "THEN"):
+            return res.failure(
+                InvalidSyntaxError("Expected 'THEN'", self.current_tok.line, self.current_tok.column)
+            )
+
+        self.advance() #skip the THEN
+
+        body = res.registers(self.expr())
+        if res.error: return res
+
+        cases.append((condition.node, body.node))
+
+        while self.current_tok.matches(TT_KEYWORD, "ELIF"):
+
+            self.advance() #skip the ELIF
+
+            condition = res.registers(self.expr())
+            if res.error: return res
+
+            if not self.current_tok.matches(TT_KEYWORD, "THEN"):
+                return res.failure(
+                    InvalidSyntaxError("Expected 'THEN'", self.current_tok.line, self.current_tok.column)
+                )
+
+            self.advance()
+
+            body = res.registers(self.expr())
+            if res.error: return res
+
+            cases.append((condition.node, body.node))
+
+        if self.current_tok.matches(TT_KEYWORD, "ELSE"):
+
+            self.advance() #skip the ELSE
+
+            else_body = res.registers(self.expr())
+            if res.error: return res
+
+            else_case = else_body.node
+
+        return res.success(IfNode(cases, else_case))
+    def for_expr(self):
+        res=ParserResult()
+
+        #if it does not matches with the for keyword then we can say its an error
+        if not self.current_tok.matches(TT_KEYWORD,"FOR"):
+            return res.failure(
+                InvalidSyntaxError(
+                    "WE NEED THE FOR KEYWORD",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        if self.current_tok.type!=TT_IDENTIFIER:
+            return res.failure(
+                InvalidSyntaxError(
+                    "WE NEED AN IDENTIFIER",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        var_name=self.current_tok
+        self.advance()
+
+        #then we have to look for the equal tokens in our code base i=1 to 10 something like this that i am thinking!
+
+        if self.current_tok.type!=TT_EQ: #if the person misses = symbpol in the code base fr example i 1 to 10
+
+            return res.failure(
+                InvalidSyntaxError(
+                    "MISSING = sign correct your syntax !",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        #get the start value of the expression !
+
+        start_value=res.registers(self.expr()) #get tje starting <oh no > repetation !
+        if res.error:return res
+
+        if not self.current_tok.matches(TT_KEYWORD,"TO"):
+            return res.failure(
+                InvalidSyntaxError(
+                    "MISSING THE =>TO<= KEYWORD!",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        end_value=res.registers(self.expr())
+        if res.error:return res
+
+        if not self.current_tok.matches(TT_KEYWORD,"THEN"):
+            return res.failure(
+                InvalidSyntaxError(
+                    "MISSING THE =>THEN<= KEYWORD!",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        body=res.registers(self.expr())
+        if res.error:return res
+
+        return res.success(
+            ForNode(
+                var_name,
+                start_value.node,
+                end_value.node,
+                1,
+                body.node
+            )
+        )
+
+    def while_expr(self):
+        res=ParserResult()
+
+        #getting the values for the while loop yeahhh !
+        if not self.current_tok.matches(TT_KEYWORD,"WHILE"):
+            return res.failure(
+                InvalidSyntaxError(
+                    "WE NEED THE WHILE KEYWORD",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        condition=res.registers(self.expr())
+        if res.error:return res
+
+        if not self.current_tok.matches(TT_KEYWORD,"THEN"):
+            return res.failure(
+                InvalidSyntaxError(
+                    "MISSING THE =>THEN<= KEYWORD!",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        body=res.registers(self.expr())
+        if res.error:return res
+
+        return res.success(
+            WhileNode(
+                condition.node,
+                body.node
             )
         )
 
@@ -634,8 +948,8 @@ class Parser:
 
             self.advance()
 
-            left = BinOp(
-                left,
+            #UnaryOp so the inside gets evaluated only ONE time (a * a * a in the interpreter)
+            left = UnaryOp(
                 op_tok,
                 left
             )
@@ -644,10 +958,38 @@ class Parser:
 
     def power(self):
 
-        return self.bin_op(
-            self.atom,
-            (TT_POW,)
+        #right side is a factor now so 2^-1 works (and 2^3^2 is 2^(3^2) like normal maths)
+        res = ParserResult()
+
+        left = res.registers(
+            self.atom()
         )
+
+        if res.error:
+            return res
+
+        left = left.node
+
+        if self.current_tok.type == TT_POW:
+
+            op_tok = self.current_tok
+
+            self.advance()
+
+            right = res.registers(
+                self.factor()
+            )
+
+            if res.error:
+                return res
+
+            left = BinOp(
+                left,
+                op_tok,
+                right.node
+            )
+
+        return res.success(left)
 
     def factor(self):
 
@@ -759,6 +1101,23 @@ class Parser:
                 )
             )
 
+        if tok.type == TT_SRI: #my cute little girl lives in factor like abs does
+
+            self.advance()
+
+            number = res.registers(
+                self.factor()
+            )
+
+            if res.error:
+                return res
+
+            return res.success(
+                SriForReal(
+                    number.node
+                )
+            )
+
         return self.cubeatom()
 
     def bin_op(self, func, ops):
@@ -772,7 +1131,9 @@ class Parser:
 
         left = left.node
 
-        while self.current_tok.type in ops:
+        #ops can hold plain token types (TT_PLUS) OR (type, value) pairs like (TT_KEYWORD, "AND")
+        while (self.current_tok.type in ops or
+               (self.current_tok.type, self.current_tok.value) in ops):
 
             op_tok = self.current_tok
 
@@ -798,6 +1159,45 @@ class Parser:
         return self.bin_op(
             self.factor,
             (TT_MUL, TT_DIV)
+        )
+
+    def arith_expr(self):
+
+        #the old + and - level lives here now
+        return self.bin_op(
+            self.term,
+            (TT_PLUS, TT_MINUS)
+        )
+
+
+    def comp_expr(self):
+
+        #NOT comp_expr  OR  arith_expr ((== != < > <= >=) arith_expr)*
+        res = ParserResult()
+
+        if self.current_tok.matches(TT_KEYWORD, "NOT"):
+
+            op_tok = self.current_tok
+
+            self.advance()
+
+            node = res.registers(
+                self.comp_expr()
+            )
+
+            if res.error:
+                return res
+
+            return res.success(
+                UnaryOp(
+                    op_tok,
+                    node.node
+                )
+            )
+
+        return self.bin_op(
+            self.arith_expr,
+            (TT_EQEQ, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE)
         )
 
     def expr(self):
@@ -834,9 +1234,10 @@ class Parser:
             return res.success(VariableAssignNode(var_name,expr.node))
 
 
+        #AND / OR sit on top of the comparisons
         return self.bin_op(
-            self.term,
-            (TT_PLUS, TT_MINUS)
+            self.comp_expr,
+            ((TT_KEYWORD, "AND"), (TT_KEYWORD, "OR"))
         )
 
     ## Parse Function to join them
@@ -852,7 +1253,7 @@ class Parser:
 
             return res.failure(
                 InvalidSyntaxError(
-                    "Expected '+', '-', '*', '/', '^', 'cube' or end of expression",
+                    "Expected '+', '-', '*', '/', '^', 'cube', comparison, 'AND', 'OR' or end of expression",
                     self.current_tok.line,
                     self.current_tok.column
                 )
@@ -940,6 +1341,55 @@ class Interpreter:
 
         return value
 
+    def visitIfNode(self, node):
+
+        for condition, body in node.cases:
+
+            if self.visit(condition): #anything not 0 is true
+                return self.visit(body)
+
+        if node.else_case is not None:
+            return self.visit(node.else_case)
+
+        return 0 #no case matched and no ELSE
+
+    def visitPrintNode(self, node):
+
+        value = self.visit(node.node)
+
+        print(value)
+
+        return None
+
+    def visitForNode(self, node):
+
+        start_value = self.visit(node.start_token)
+        end_value = self.visit(node.end_value_Node)
+
+        current = int(start_value)
+        end_value = int(end_value)
+        result = None
+
+        while current <= end_value:
+
+            self.symbol_table.set(node.var_name.value, current)
+
+            result = self.visit(node.Body_Node)
+
+            current += node.step_value
+
+        return result
+
+    def visitWhileNode(self, node):
+
+        result = None
+
+        while self.visit(node.condition_Node):
+
+            result = self.visit(node.body_Node)
+
+        return result
+
     def whole_number(self, number, line, column):
 
         #even/odd only make sense for whole numbers (2.0 is ok, 2.5 is not)
@@ -959,7 +1409,7 @@ class Interpreter:
 
         number = self.whole_number(number, node.line, node.column)
 
-        return number % 2 == 0
+        return int(number % 2 == 0) #1 for true 0 for false !
 
     def visitOddCheckForReal(self, node):
 
@@ -967,13 +1417,19 @@ class Interpreter:
 
         number = self.whole_number(number, node.line, node.column)
 
-        return number % 2 != 0
+        return int(number % 2 != 0) #1 for true 0 for false !
 
     def visitAbsForReal(self, node):
 
         number = self.visit(node.node)
 
         return abs(number)
+
+    def visitSriForReal(self, node):
+
+        number = self.visit(node.node)
+
+        return number * 2 #love doubles everything and i really love you and that si what i am doing it !
 
     def visitBinOp(self, node):
 
@@ -1009,6 +1465,18 @@ class Interpreter:
             except OverflowError:
                 raise RunTimeError("Result is too big", line, column)
 
+        #relational ones (1 is true and 0 is false)
+        elif node.op_token.type == TT_EQEQ: return int(left == right)
+        elif node.op_token.type == TT_NE:   return int(left != right)
+        elif node.op_token.type == TT_LT:   return int(left < right)
+        elif node.op_token.type == TT_GT:   return int(left > right)
+        elif node.op_token.type == TT_LTE:  return int(left <= right)
+        elif node.op_token.type == TT_GTE:  return int(left >= right)
+
+        #conditional ones
+        elif node.op_token.matches(TT_KEYWORD, "AND"): return int(bool(left) and bool(right))
+        elif node.op_token.matches(TT_KEYWORD, "OR"):  return int(bool(left) or bool(right))
+
         elif node.op_token.type == TT_POW:
 
             try:
@@ -1027,21 +1495,27 @@ class Interpreter:
 
             return answer
 
-        elif node.op_token.type == TT_CUBE:
-
-            return left * left * left
-
     def visitUnaryOp(self, node):
 
         number = self.visit(node.node)
 
-        if node.op_token.type == TT_MINUS:
+        t = node.op_token
+
+        if t.type == TT_MINUS:
 
             return -number
 
-        elif node.op_token.type == TT_PLUS:
+        elif t.type == TT_PLUS:
 
             return number
+
+        elif t.type == TT_CUBE:
+
+            return number * number * number
+
+        elif t.matches(TT_KEYWORD, "NOT"):
+
+            return int(not number)
 
 
 ##########################
@@ -1082,6 +1556,10 @@ def run(text):
 
         return None, [error]
 
+    except Exception as error: #anything else so the REPL never dies
+
+        return None, [RunTimeError(str(error), 0, 0)]
+
 
 ##########################
 # TERMINAL
@@ -1115,46 +1593,59 @@ def run_file(filename):
                 )
             return #stop at the first error
 
-        print(result)
+        if result is not None:
+            print(result)
 
- #making a function so that i can have my own extenstion !
-while True:
+#making a function so that i can have my own extenstion !
+def repl():
 
-    try:
-        text = input("PraxLang >>> ")
-    except (EOFError, KeyboardInterrupt):
-        print("\nBye 👋 users !! it is a cruel world a cruel language i am making !")
-        break
+    while True:
 
-    if text.strip() == "":
-        continue
+        try:
+            text = input("PraxLang >>> ")
+        except (EOFError, KeyboardInterrupt):
+            print("\nBye 👋 users !! it is a cruel world a cruel language i am making !")
+            break
 
-    if text == "exit":
+        if text.strip() == "":
+            continue
 
-        print("Bye 👋")
+        if text == "exit":
 
-        break
+            print("Bye 👋 and yahh the programming language of mine is dopw ")
 
-    result, errors = run(text)
+            break
 
-    if errors:
+        result, errors = run(text)
 
-        for error in errors:
+        if errors:
 
-            print(
-                f"\033[91m[ERROR]\033[0m "
-                f"{error.as_String()}"
-            )
+            for error in errors:
 
+                print(
+                    f"\033[91m[ERROR]\033[0m "
+                    f"{error.as_String()}"
+                )
+
+        else:
+
+            if result is not None:
+                print(
+                    f"\033[92m[RESULT]\033[0m "
+                    f"{result}"
+                )
+
+
+if __name__ == "__main__":
+
+    if len(sys.argv) > 1:
+        run_file(sys.argv[1]) #python praxlang.py myfile.prax
     else:
+        repl() #python praxlang.py of the language of it !
 
-        print(
-            f"\033[92m[RESULT]\033[0m "
-            f"{result}"
-        )
 
 #hey we want some variables in this good damn langauge lol ???
 
 #so  see i dont want it to name it like var <varable name> = <expr>  {NO JS LIKE PLS SORRY }
 
-#so name it LIKE V (CyberPunk 2077 ) lol v <variable name>=<expr>  {so it is like 2077 not some agentic bs<>
+#so name it LIKE V (CyberPunk 2077 ) lol v <variable name>=<expr>  {so it is like 2077 not some agentic bs<> so do it the part i am doing !
