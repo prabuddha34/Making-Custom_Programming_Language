@@ -1,9 +1,9 @@
 ######################
 # TOKENS
 ######################
-import string
+import string #here i have taken the string one !
 import sys
-import os
+import os #for time pass i have imported this !
 
 TT_INT = 'TT_INT'
 TT_FLOAT = 'TT_FLOAT'
@@ -32,6 +32,20 @@ TT_EQ='TT_EQ'
 
 TT_SRI='TT_SRI'
 
+#now we need to add functions in this code base so for this we need , and  and -> keyworld
+
+TT_COMMA='TT_COMMA'
+TT_ARROW='TT_ARROW'
+
+#so i am lol i mean i want to add like some kind of an array in my code base ! ok >
+#so see assume i mean i kinda want my system to have like this a=[1, 2, 3, 4, 5]
+#so my lexer shall have these 2 vals [ ] this symbol should form !
+#and secondly my parser must get the vals from [] here to understnaf my code !
+
+TT_LSQUARE='TT_LSQUARE'
+TT_RSQUARE='TT_RSQUARE'
+
+#so the above are these [ and these ]
 KEYWORDS=[
     "V", #for naming the varaible,
     "AND", # this is the and one
@@ -45,11 +59,20 @@ KEYWORDS=[
     "TO",
     "WHILE",
     "PRINT",
-    "print"
+    "print",
+    "Function"
+
 ]
 #add some realtional and conditional ones in my language so get them ok?
 #we want that in our language ! and say 0 be false and 1 be true !
-#and is both are true abd or is any one statement is true !
+#and is both are true abd or is any one statement is true !44
+
+#hey i want to be cool so that i can add some <DATA_TYPE>.type-->prints the description of it !
+TYPE_INT = "INT"
+TYPE_FLOAT = "FLOAT"
+TYPE_STRING = "STRING"
+TYPE_BOOL = "BOOL"
+TT_DOT = 'TT_DOT'
 
 TT_EQEQ = 'TT_EQEQ' # ==
 TT_NE = 'TT_NE' #!=
@@ -147,7 +170,7 @@ class RunTimeError(Error):
         )
 
 ##########################
-# LEXER
+# LEXER lol of it !
 ##########################
 
 class Lexer:
@@ -200,18 +223,8 @@ class Lexer:
 
                 self.advance()
 
-            elif self.curr == '-':
-
-                tokens.append(
-                    Token(
-                        TT_MINUS,
-                        '-',
-                        self.line,
-                        self.column
-                    )
-                )
-
-                self.advance()
+            elif self.curr == '-':#so see in my lang we have - as the subscration but in the function we also need (->) this so to get it we have to make out lexer understand it
+                tokens.append(self.make_or_minus_function())
 
             elif self.curr == '*':
 
@@ -251,6 +264,26 @@ class Lexer:
                 )
 
                 self.advance()
+            elif self.curr in '[]': #getting the symbol vals of it !
+
+                tokens.append(Token(TT_LSQUARE if self.curr == '[' else TT_RSQUARE, self.curr, self.line, self.column))
+
+                self.advance()
+
+
+            elif self.curr == ',': #we are takinfg in the , one in this to help our lexer get it !
+
+                tokens.append(
+                    Token(
+                        TT_COMMA, #getting the token value !
+                        ',',
+                        self.line,
+                        self.column
+                    )
+                )
+
+                self.advance()
+
 
             elif self.curr == ')':
 
@@ -270,6 +303,16 @@ class Lexer:
                 tokens.append(
                     self.make_numbers_lol()
                 )
+            elif self.curr =='.':
+                tokens.append(
+                    Token(
+                        TT_DOT,
+                        '.',
+                        self.line,
+                        self.column
+                    )
+                )
+                self.advance()
 
             elif self.curr == '^':
 
@@ -284,9 +327,13 @@ class Lexer:
 
                 self.advance()
 
+
+
             elif self.curr == '=': #so we are getting the eqaul for making v <variable_name> = <expr>/<value>ok?
                 #this one also checks for == now so only ONE = branch lives here
                 tokens.append(self.make_equals())
+
+
 
             elif self.curr =='!':
                 tok,error=self.make_not_equals() #get the ! equal function of it !
@@ -472,6 +519,7 @@ class Lexer:
 
         return Token(TT_GT, '>', line, col)
 
+#we can dance and we can jive !
 
 
 
@@ -486,6 +534,20 @@ class Lexer:
 
         tok_type=TT_KEYWORD if id_start in  KEYWORDS else TT_IDENTIFIER
         return  Token(tok_type,id_start,start_line,start_column)
+
+
+    def make_or_minus_function(self):#so this is the make_minus function to see that whether we have - or -> this
+        tok_type=TT_MINUS #checking if we are getting the - or not
+        line=self.line
+        column=self.column
+        self.advance()
+
+        if self.curr =='>':
+            self.advance()
+            return Token(TT_ARROW,'->',line,column)
+
+        return  Token(tok_type,'-',line,column)
+
 
 
 
@@ -503,6 +565,29 @@ class ForNode:
         self.end_value_Node=end_value_Node
         self.step_value=step_value
         self.Body_Node=Body_Node
+
+class FunctionDefNode:
+
+    def __init__(self,var_name,arg_names,body_node):
+        self.var_name=var_name #None if the function has no name
+        self.arg_names=arg_names
+        self.body_node=body_node
+
+    def __repr__(self):
+        return f'(function {self.arg_names} -> {self.body_node})'
+
+
+class CallNode: #this is for add(1,2) like calls
+
+    def __init__(self,node_to_call,arg_nodes,line=None,column=None):
+        self.node_to_call=node_to_call
+        self.arg_nodes=arg_nodes
+        self.line=line
+        self.column=column
+
+    def __repr__(self):
+        return f'(call {self.node_to_call} {self.arg_nodes})'
+
 class WhileNode: #getting the values for the while lOOp yeahhh !
     def __init__(self,condition_Node,body_Node):
         self.condition_Node=condition_Node
@@ -515,6 +600,18 @@ class PrintNode:
     def __repr__(self):
         return f'(print {self.node})'
 
+class ListNode: #getting the list node of it ! so that i can place vals in it !
+    def __init__(self,elements,line=None,column=None):
+        self.elements=elements
+        self.line=line
+        self.column=column
+
+class IndexNode: #hey i want the index one please ! lol man i am the dope ! index has been added !
+    def __init__(self,target,index,line=None,column=None):
+        self.target=target
+        self.index=index
+        self.line=line
+        self.column=column
 
 class IfNode:
     def __init__(self,cases,else_case):
@@ -543,6 +640,12 @@ class VariableAccessNode:
     def __repr__(self):
         return f'(get {self.var_name.value})'
 
+class TypeNode:
+    def __init__(self, node):
+        self.node = node
+
+    def __repr__(self):
+        return f'(type {self.node})'
 
 class VariableAssignNode:
     def __init__(self,var_name,value_node):
@@ -677,7 +780,7 @@ class Parser:
 
         else:
 
-            self.current_tok = None
+            self.current_tok = self.tokens[-1] #stay on the EOF token instead of None so nothing crashes
 
     def atom(self):
 
@@ -687,6 +790,17 @@ class Parser:
 
         if tok.matches(TT_KEYWORD,"IF"):
             return self.if_expr() #parsing it in my parser and getting the if staemtnt out of ut !
+
+        #getting the token of the for and the while loop
+
+        if tok.matches(TT_KEYWORD,'FOR'):
+            return self.for_expr() #callin our for_expr() function
+
+        if tok.matches(TT_KEYWORD,'WHILE'):
+            return self.while_expr() #getting the while_expr() function
+
+        if tok.matches(TT_KEYWORD,'Function'):
+            return self.func_def() #getting the func_def() function
 
         if tok.matches(TT_KEYWORD,"print") or tok.matches(TT_KEYWORD,"PRINT"):
             self.advance()
@@ -698,10 +812,41 @@ class Parser:
 
             return res.success(PrintNode(value.node))
 
+        #so first get the [ this part of my list so that i can get the starting syntax of it !
 
-        if tok.type == TT_IDENTIFIER:
-            self.advance()
-            return res.success(VariableAccessNode(tok))
+        if tok.type ==TT_LSQUARE: #GETTING THIS [
+            self.advance() #so now we are advancing the token !
+            #now here ib this we are taking the help of the list !
+            elements=[] #just take thw value to be empty !
+            #now my main motto is to run TILL WE ARE GETTING THIS ] the endinf parenthesis !
+
+            while self.current_tok.type!=TT_RSQUARE:
+                item=res.registers(self.expr()) #ww are taking the items !
+                #lol again check for the error if any
+                if res.error:return res #get the error value to the screen if any !
+
+                #or append it to my lists !
+                elements.append(item.node) #adding it to my elements=[] list !
+
+                if self.current_tok.type == TT_COMMA:
+                    self.advance() #just move it if i can get (,) so move to the next !
+
+                elif self.current_tok.type != TT_RSQUARE:
+                    #failure part !
+                    return res.failure(
+                        InvalidSyntaxError(
+                            "Expected ',' or ']' and hell nah learn python then ! :(",
+                            self.current_tok.line,
+                            self.current_tok.column
+                        )
+                    )
+            self.advance() #skip the ]
+
+            return res.success(ListNode(elements, tok.line, tok.column))
+ #so now i have to go to the power() function to correct my parser
+
+
+
 
         if tok.type in (TT_INT, TT_FLOAT):
 
@@ -710,13 +855,82 @@ class Parser:
             return res.success(
                 NumberNodes(tok)
             )
-        #getting the token of the for and the while loop
 
-        if tok.matches(TT_KEYWORD,'FOR'):
-            return self.for_expr() #callin our for_expr() function
+        if tok.type == TT_IDENTIFIER:
 
-        if tok.matches(TT_KEYWORD,'WHILE'):
-            return self.while_expr() #getting the while_expr() function
+            self.advance()
+
+            #name.type --> gives the data type of it
+            if self.current_tok.type == TT_DOT:
+
+                self.advance()
+
+                if self.current_tok.type != TT_IDENTIFIER or self.current_tok.value != "type":
+                    return res.failure(
+                        InvalidSyntaxError(
+                            "Expected 'type' after '.'",
+                            self.current_tok.line,
+                            self.current_tok.column
+                        )
+                    )
+
+                self.advance()
+
+                return res.success(
+                    TypeNode(
+                        VariableAccessNode(tok)
+                    )
+                )
+
+            #name(arg1,arg2) --> calling a function
+            if self.current_tok.type == TT_LPAREN:
+
+                self.advance()
+
+                arg_nodes = []
+
+                if self.current_tok.type != TT_RPAREN:
+
+                    arg = res.registers(self.expr())
+
+                    if res.error:
+                        return res
+
+                    arg_nodes.append(arg.node)
+
+                    while self.current_tok.type == TT_COMMA:
+
+                        self.advance()
+
+                        arg = res.registers(self.expr())
+
+                        if res.error:
+                            return res
+
+                        arg_nodes.append(arg.node)
+
+                if self.current_tok.type != TT_RPAREN:
+
+                    return res.failure(
+                        InvalidSyntaxError(
+                            "Expected ',' or ')'",
+                            self.current_tok.line,
+                            self.current_tok.column
+                        )
+                    )
+
+                self.advance()
+
+                return res.success(
+                    CallNode(
+                        VariableAccessNode(tok),
+                        arg_nodes,
+                        tok.line,
+                        tok.column
+                    )
+                )
+
+            return res.success(VariableAccessNode(tok))
 
 
         if tok.type == TT_LPAREN:
@@ -748,7 +962,7 @@ class Parser:
 
         return res.failure(
             InvalidSyntaxError(
-                "Expected number, variable, print, if, for, while or '('",
+                "Expected number, variable, print, if, for, while, Function or '('",
                 tok.line,
                 tok.column
             )
@@ -929,6 +1143,93 @@ class Parser:
             )
         )
 
+    def func_def(self):
+        res=ParserResult()
+
+        if not self.current_tok.matches(TT_KEYWORD,"Function"):
+            return res.failure(
+                InvalidSyntaxError(
+                    "WE NEED THE Function KEYWORD",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        var_name=None #the name is optional so V f = Function (x) -> x works too
+
+        if self.current_tok.type==TT_IDENTIFIER:
+            var_name=self.current_tok
+            self.advance()
+
+        if self.current_tok.type!=TT_LPAREN:
+            return res.failure(
+                InvalidSyntaxError(
+                    "Expected '('",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        arg_names=[]
+
+        if self.current_tok.type==TT_IDENTIFIER:
+
+            arg_names.append(self.current_tok)
+            self.advance()
+
+            while self.current_tok.type==TT_COMMA:
+
+                self.advance()
+
+                if self.current_tok.type!=TT_IDENTIFIER:
+                    return res.failure(
+                        InvalidSyntaxError(
+                            "Expected an argument name",
+                            self.current_tok.line,
+                            self.current_tok.column
+                        )
+                    )
+
+                arg_names.append(self.current_tok)
+                self.advance()
+
+        if self.current_tok.type!=TT_RPAREN:
+            return res.failure(
+                InvalidSyntaxError(
+                    "Expected ',' or ')'",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        if self.current_tok.type!=TT_ARROW:
+            return res.failure(
+                InvalidSyntaxError(
+                    "Expected '->'",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        self.advance()
+
+        body=res.registers(self.expr())
+        if res.error:return res
+
+        return res.success(
+            FunctionDefNode(
+                var_name,
+                arg_names,
+                body.node
+            )
+        )
+
     def cubeatom(self):
 
         res = ParserResult()
@@ -969,6 +1270,37 @@ class Parser:
             return res
 
         left = left.node
+        #so here we have to update  the logic for my lists ! in my language !
+        #so first of all we need the left sqaure ([) this one !
+
+        #so loop it
+        while self.current_tok.type==TT_LSQUARE:
+            token_Sq=self.current_tok #um storing it in here !
+            #then we shall advance !
+            self.advance()
+
+            #the main funda that rn i have to get the index value of it !
+            index = res.registers(self.expr()) #getting in the index of it!
+
+            #so agaian a bs job to check for errrors
+            if res.error:return res
+
+            #what about if not equal to ] right sqaure then it is a wrong syntax isn't it?
+
+            #so check for it !
+            if self.current_tok.type != TT_RSQUARE:
+                return res.failure(
+                    InvalidSyntaxError(
+                        "Expected ']' and you are an idiot that you forgot it!",
+                        self.current_tok.line,
+                        self.current_tok.column
+                    )
+                ) #so this is a generic one lol what i can say about it!
+            self.advance()
+            left = IndexNode(left, index.node, token_Sq.line, token_Sq.column) #getting it loll!
+
+
+
 
         if self.current_tok.type == TT_POW:
 
@@ -1155,6 +1487,7 @@ class Parser:
         return res.success(left)
 
     def term(self):
+        #getting the term of it ! and thus it can be done and have been worked on it !
 
         return self.bin_op(
             self.factor,
@@ -1172,7 +1505,7 @@ class Parser:
 
     def comp_expr(self):
 
-        #NOT comp_expr  OR  arith_expr ((== != < > <= >=) arith_expr)*
+        #NOT comp_expr  OR  arith_expr ((== != < > <= >=) arith_expr)* get the compacted expression!
         res = ParserResult()
 
         if self.current_tok.matches(TT_KEYWORD, "NOT"):
@@ -1268,21 +1601,46 @@ class Parser:
 
 class SymbolTable:
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
         self.symbols = {}
+        self.parent = parent #the outer scope (global one for functions)
 
     def get(self, name):
 
-        return self.symbols.get(name)
+        if name in self.symbols:
+            return self.symbols[name]
+
+        if self.parent is not None:
+            return self.parent.get(name)
+
+        return None
 
     def has(self, name):
 
-        return name in self.symbols
+        if name in self.symbols:
+            return True
+
+        return self.parent is not None and self.parent.has(name)
 
     def set(self, name, value):
 
         self.symbols[name] = value
+
+
+class Function: #the runtime value of a function so it can live in a V variable
+
+    def __init__(self, name, arg_names, body_node, symbol_table):
+
+        self.name = name
+        self.arg_names = arg_names
+        self.body_node = body_node
+        self.symbol_table = symbol_table #where it was made
+
+    def __repr__(self):
+
+        return f'<function {self.name}>' if self.name else '<function>'
+
 
 
 ##########################
@@ -1290,6 +1648,25 @@ class SymbolTable:
 ##########################
 
 class Interpreter:
+    def get_type(self, value):
+
+        if isinstance(value, bool):
+            return TYPE_BOOL
+
+        if isinstance(value, int):
+            return TYPE_INT
+
+        if isinstance(value, float):
+            return TYPE_FLOAT
+
+        if isinstance(value, str):
+            return TYPE_STRING
+
+        if isinstance(value, Function):
+            return "FUNCTION"
+
+        return "NONE" #anything else (like None) so it never returns nothing
+
 
     def __init__(self, symbol_table):
 
@@ -1324,22 +1701,29 @@ class Interpreter:
         if not self.symbol_table.has(name):
 
             raise RunTimeError(
-                f"'{name}' is not defined",
+                f"'{name}' is not defined !and thus it is not possible !",
                 node.line,
                 node.column
             )
 
-        return self.symbol_table.get(name)
+        return self.symbol_table.get(name)#getting the symbol_tabl of the value
+
+    def visitTypeNode(self, node):
+
+        #x.type --> visit the variable and tell what data type it holds
+        value = self.visit(node.node)
+
+        return self.get_type(value)
 
     def visitVariableAssignNode(self, node):
 
-        name = node.var_name.value
+        name = node.var_name.value #taking the var_name and contains the value of it!
 
-        value = self.visit(node.value_node)
+        value = self.visit(node.value_node)#getting the value of it and this is the string of it
 
-        self.symbol_table.set(name, value)
+        self.symbol_table.set(name, value)#getting of the calculate of it!
 
-        return value
+        return value #getting the value of it and this is the string of value of them and thus and we can do it
 
     def visitIfNode(self, node):
 
@@ -1353,21 +1737,21 @@ class Interpreter:
 
         return 0 #no case matched and no ELSE
 
-    def visitPrintNode(self, node):
+    def visitPrintNode(self, node): #printing the value
 
-        value = self.visit(node.node)
+        value = self.visit(node.node) #Taking the self node value and these value of it
 
         print(value)
 
         return None
 
-    def visitForNode(self, node):
+    def visitForNode(self, node):#so that is the of the value!
 
         start_value = self.visit(node.start_token)
         end_value = self.visit(node.end_value_Node)
 
-        current = int(start_value)
-        end_value = int(end_value)
+        current = int(start_value)#f=getting the first val
+        end_value = int(end_value) #getting the end val
         result = None
 
         while current <= end_value:
@@ -1376,10 +1760,10 @@ class Interpreter:
 
             result = self.visit(node.Body_Node)
 
-            current += node.step_value
+            current += node.step_value #taking the current val!and adding in it!
 
-        return result
-
+        return result #ewturn thr result
+#vising the while node of the value !
     def visitWhileNode(self, node):
 
         result = None
@@ -1388,7 +1772,66 @@ class Interpreter:
 
             result = self.visit(node.body_Node)
 
-        return result
+            return result
+
+    def visitListNode(self, node):
+
+        return [self.visit(element) for element in node.elements]
+
+    def visitIndexNode(self, node):
+
+        target = self.visit(node.target)
+        index = self.visit(node.index)
+
+        if not isinstance(target, list):
+            raise RunTimeError("Only lists can be indexed mate !", node.line, node.column)
+
+        if not isinstance(index, int) or not -len(target) <= index < len(target):
+            raise RunTimeError("List index out of range", node.line, node.column)
+
+        return target[index]
+
+    def visitFunctionDefNode(self, node):
+
+        name = node.var_name.value if node.var_name else None
+
+        arg_names = [arg.value for arg in node.arg_names]
+
+        func = Function(name, arg_names, node.body_node, self.symbol_table)
+
+        if name:
+            self.symbol_table.set(name, func)
+
+        return func
+
+    def visitCallNode(self, node):
+
+        func = self.visit(node.node_to_call)
+
+        if not isinstance(func, Function):
+
+            raise RunTimeError(
+                "That is not a function so you cannot call it",
+                node.line,
+                node.column
+            )
+
+        if len(node.arg_nodes) != len(func.arg_names):
+
+            raise RunTimeError(
+                f"Expected {len(func.arg_names)} argument(s) but got {len(node.arg_nodes)}",
+                node.line,
+                node.column
+            )
+
+        args = [self.visit(arg) for arg in node.arg_nodes]
+
+        local_table = SymbolTable(func.symbol_table) #fresh scope for every call
+
+        for name, value in zip(func.arg_names, args):
+            local_table.set(name, value)
+
+        return Interpreter(local_table).visit(func.body_node)
 
     def whole_number(self, number, line, column):
 
