@@ -1,574 +1,389 @@
-# PraxLang
+# PraxLang 🚀
 
-> A small interpreted programming language built from scratch in Python.
+> A minimal, dynamically typed, interpreted programming language built entirely from scratch in Python, without external parser generators or third-party runtimes.
 
-**PraxLang** is a personal programming language project created to explore how programming languages work internally — from lexical analysis and parsing to AST construction, symbol tables, scopes, and interpretation.
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Project Status](https://img.shields.io/badge/status-experimental%20%2F%20educational-orange.svg)](#)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-The project is intentionally built from the ground up without relying on parser generators or existing language runtimes.
+**PraxLang** is an experimental programming language built from the ground up to explore how programming languages work internally.
 
-PraxLang uses its own syntax, lexer, parser, AST nodes, interpreter, error system, REPL, and `.pra` source-file format.
+The project implements its own **lexer, parser, AST, symbol tables, scope handling, and tree-walking interpreter** without relying on external parser generators or third-party language runtimes.
+
+---
+
+## 📸 Overview & Architecture
+
+PraxLang follows a traditional **tree-walking interpreter pipeline**.
+
+Source code is read, tokenized by the lexer, parsed into an Abstract Syntax Tree (AST), and then evaluated by the interpreter.
+
+```text
+┌────────────────────────┐
+│     PraxLang Source    │
+│         (.pra)         │
+└───────────┬────────────┘
+            │
+            ▼
+     ┌─────────────┐
+     │    Lexer    │
+     └──────┬──────┘
+            │ Tokens
+            ▼
+     ┌─────────────┐
+     │    Parser   │
+     └──────┬──────┘
+            │ AST
+            ▼
+     ┌─────────────┐
+     │ Interpreter │◄──────────┐
+     └──────┬──────┘           │
+            │              Symbol Tables
+            ▼              & Environments
+     ┌─────────────┐           │
+     │  Execution  │───────────┘
+     │   / Result  │
+     └─────────────┘
+```
+
+### Pipeline
+
+```text
+Source Code
+    ↓
+Lexical Analysis
+    ↓
+Parsing
+    ↓
+AST Construction
+    ↓
+Scope Resolution
+    ↓
+Tree-Walking Interpretation
+    ↓
+Program Output
+```
 
 ---
 
 ## ✨ Features
 
-### Core language
+### 🧱 Built From First Principles
 
-- Integer and floating-point numbers
-- Variables
-- Arithmetic expressions
-- Operator precedence
-- Unary `+` and `-`
-- Exponentiation with `^`
-- Cube operation
-- Square root
-- Absolute value
-- Even / odd checking
+- Custom lexer
+- Custom parser
+- Custom AST representation
+- Custom tree-walking interpreter
+- No external parser generators such as PLY, ANTLR, or Lark
+- No third-party language runtime
 
-### Variables
+### 🔤 Custom Syntax
 
-Variables use the `V` keyword:
+PraxLang uses its own syntax and keywords, including:
 
-```prax
+- `V` for variable declarations
+- `IF`, `ELIF`, `ELSE`, `END`
+- `FOR`, `TO`
+- `WHILE`
+- `THEN`
+- `PRINT`
+- `FUNCTION`
+
+### 📦 Core Data Types
+
+PraxLang currently supports:
+
+- Integers
+- Floating-point numbers
+- Lists
+
+### 🌳 Abstract Syntax Tree
+
+Expressions and statements are converted into AST nodes before execution, separating parsing from interpretation.
+
+### 🧠 Symbol Tables & Scope
+
+PraxLang maintains symbol tables and nested environments for variable storage and scope management.
+
+Function calls create their own execution environments for handling parameters and local variables.
+
+### 🔁 Control Flow
+
+Supported control-flow constructs include:
+
+- `IF`
+- `ELIF`
+- `ELSE`
+- `FOR`
+- `WHILE`
+
+### 🧩 Functions
+
+PraxLang supports user-defined functions with parameters and function calls.
+
+Example:
+
+```praxlang
+FUNCTION multiply(a, b) -> a * b
+
+PRINT multiply(6, 7)
+```
+
+### 🧮 Built-in Operations
+
+PraxLang provides several built-in mathematical operations:
+
+- `sqrt`
+- `abs`
+- `even_check`
+- `odd_check`
+- `cube`
+- Exponentiation using `^`
+
+### ⚠️ Error Handling
+
+PraxLang provides dedicated error types for different stages of execution:
+
+- **Illegal Character Error** — invalid characters during lexical analysis
+- **Invalid Syntax Error** — invalid program structure
+- **Runtime Error** — errors occurring during execution
+
+Errors include useful **line and column information** to make debugging easier.
+
+---
+
+# 🔤 Syntax Guide
+
+## Variables
+
+Variables are declared using the `V` keyword.
+
+```praxlang
 V x = 10
-V y = 20
+V y = 20.5
+V numbers = [1, 2, 3, 4]
 
-x + y
+PRINT x + y
+PRINT numbers[0]
 ```
 
 ---
 
-## 🔀 Control Flow
+## Conditional Statements
 
-PraxLang supports conditional statements:
+```praxlang
+V score = 85
 
-```prax
-IF x > 10 THEN
-    PRINT x
-END
-```
-
-Multiple branches are supported:
-
-```prax
-IF x > 10 THEN
-    PRINT x
-ELIF x == 10 THEN
-    PRINT 10
+IF score >= 90 THEN
+    PRINT 1
+ELIF score >= 70 THEN
+    PRINT 2
 ELSE
     PRINT 0
 END
 ```
 
-### `FOR` loops
+---
 
-```prax
+## FOR Loops
+
+```praxlang
 FOR i = 1 TO 5 THEN
     PRINT i
 END
 ```
 
-### `WHILE` loops
+---
 
-```prax
-V x = 1
+## WHILE Loops
 
-WHILE x <= 5 THEN
-    PRINT x
-    V x = x + 1
+```praxlang
+V counter = 0
+
+WHILE counter < 3 THEN
+    PRINT counter
+    V counter = counter + 1
 END
 ```
 
-Multiline blocks are terminated using `END`.
+---
+
+## Functions
+
+Functions can accept parameters and return the value of their expression.
+
+```praxlang
+FUNCTION multiply(a, b) -> a * b
+
+PRINT multiply(6, 7)
+```
+
+Output:
+
+```text
+42
+```
 
 ---
 
-## 📦 Lists
+## 🔢 Operators & Built-in Operations
 
-PraxLang supports list creation:
-
-```prax
-V numbers = [10, 20, 30, 40]
-```
-
-and indexing:
-
-```prax
-PRINT numbers[0]
-PRINT numbers[2]
-```
-
-Lists are represented internally by the interpreter and can be accessed through index expressions.
-
----
-
-## 🧩 Functions
-
-PraxLang supports function definitions, arguments, function calls, and local scopes.
-
-Example:
-
-```prax
-Function add(a, b) -> a + b
-```
-
-Functions can then be called using:
-
-```prax
-add(10, 20)
-```
-
-Functions receive their own symbol table while retaining access to their surrounding environment.
-
----
-
-## 🔢 Operators
-
-### Arithmetic
-
-| Operator | Description |
+| Category | Supported Operations |
 |---|---|
-| `+` | Addition |
-| `-` | Subtraction |
-| `*` | Multiplication |
-| `/` | Division |
-| `^` | Exponentiation |
+| Arithmetic | `+`, `-`, `*`, `/`, `^` |
+| Comparison | `==`, `!=`, `<`, `>`, `<=`, `>=` |
+| Logical | `AND`, `OR`, `NOT` |
+| Mathematical | `sqrt`, `abs`, `cube` |
+| Checks | `even_check`, `odd_check` |
 
-### Comparison
-
-| Operator | Description |
-|---|---|
-| `==` | Equal |
-| `!=` | Not equal |
-| `<` | Less than |
-| `>` | Greater than |
-| `<=` | Less than or equal |
-| `>=` | Greater than or equal |
-
-### Logical
-
-| Operator | Description |
-|---|---|
-| `AND` | Logical AND |
-| `OR` | Logical OR |
-| `NOT` | Logical NOT |
-
-Boolean results are represented internally as `1` and `0`.
+Logical expressions internally evaluate to `1` or `0`.
 
 ---
 
-## 🧮 Built-in Operations
+# 🛠️ Project Structure
 
-PraxLang currently includes several built-in operations:
-
-```prax
-sqrt 25
-abs -10
-even_check 10
-odd_check 7
-```
-
-The language also supports exponentiation:
-
-```prax
-2 ^ 5
-```
-
-and cube operations:
-
-```prax
-3 cube
+```text
+PraxLang/
+│
+├── praxlang.py          # Main interpreter pipeline
+│                        # Lexer, Parser, AST & Interpreter
+│
+├── examples/
+│   └── hello.pra        # Example PraxLang programs
+│
+├── LICENSE              # MIT License
+└── README.md            # Project documentation
 ```
 
 ---
 
-## 🏗️ How PraxLang Works
+# 🚀 Getting Started
 
-PraxLang follows a traditional interpreter pipeline:
+## Prerequisites
 
-```text
-             PraxLang Source
-                    │
-                    ▼
-                ┌───────┐
-                │ Lexer │
-                └───┬───┘
-                    │
-                    ▼
-                 Tokens
-                    │
-                    ▼
-                ┌────────┐
-                │ Parser │
-                └───┬────┘
-                    │
-                    ▼
-                  AST
-                    │
-                    ▼
-              ┌────────────┐
-              │ Interpreter│
-              └─────┬──────┘
-                    │
-                    ▼
-                 Result
-```
+Make sure you have **Python 3.8 or newer** installed.
 
-### Lexer
+Check your Python version:
 
-The lexer reads raw PraxLang source code and converts it into tokens.
-
-For example:
-
-```prax
-V x = 10 + 5
-```
-
-becomes a sequence containing tokens representing:
-
-```text
-KEYWORD(V)
-IDENTIFIER(x)
-=
-INT(10)
-+
-INT(5)
-```
-
-The lexer also tracks line and column information for errors.
-
-### Parser
-
-The parser consumes the tokens and constructs an **Abstract Syntax Tree (AST)**.
-
-For example:
-
-```prax
-2 + 3 * 4
-```
-
-is represented structurally so that multiplication is evaluated before addition.
-
-### AST
-
-PraxLang uses dedicated node classes for different language constructs, including nodes for:
-
-- Numbers
-- Variables
-- Variable assignments
-- Binary operations
-- Unary operations
-- Lists
-- Indexing
-- Functions
-- Function calls
-- `IF`
-- `FOR`
-- `WHILE`
-- `PRINT`
-- Multiple statements
-
-### Interpreter
-
-The interpreter walks the AST and evaluates each node.
-
-A visitor-style architecture is used:
-
-```text
-AST Node
-   │
-   ▼
-visit(Node)
-   │
-   ├── visitNumberNodes()
-   ├── visitBinOp()
-   ├── visitIfNode()
-   ├── visitForNode()
-   ├── visitWhileNode()
-   ├── visitListNode()
-   ├── visitCallNode()
-   └── ...
+```bash
+python --version
 ```
 
 ---
 
-## 🧠 Symbol Tables and Scope
+## Installation
 
-PraxLang has its own `SymbolTable` implementation.
+Clone the repository:
 
-Symbol tables store variables and support parent scopes:
-
-```text
-Global Symbol Table
-        │
-        ├── x
-        ├── y
-        │
-        └── Function Scope
-                │
-                ├── a
-                └── b
+```bash
+git clone https://github.com/prabuddha34/Making-Custom_Programming_Language.git
+cd Making-Custom_Programming_Language
 ```
-
-Function calls create a fresh local symbol table while maintaining access to the surrounding environment.
-
-This allows PraxLang to experiment with lexical/environment-based scope rather than simply storing every variable globally.
 
 ---
 
-## ⚠️ Error Handling
+## Run the Interactive REPL
 
-PraxLang has separate error types for different stages of execution:
-
-```text
-Illegal Character
-Invalid Syntax
-Run Time Error
-```
-
-Errors include source locations:
-
-```text
-Invalid Syntax: Missing END (Line 4, Column 12)
-```
-
-This makes syntax and runtime problems easier to locate while experimenting with the language.
-
----
-
-## 💻 Running PraxLang
-
-### Requirements
-
-- Python 3
-- No external parser/runtime required
-
-Clone the repository and enter the project directory.
-
-Then start the REPL:
+Start PraxLang in interactive mode:
 
 ```bash
 python praxlang.py
 ```
 
-You should see:
-
-```text
-PraxLang >>>
-```
-
 Example:
 
 ```text
-PraxLang >>> 10 + 20
+PraxLang >>> V x = 10
+PraxLang >>> x * 3
 [RESULT] 30
 ```
 
 ---
 
-## 📄 Running a `.pra` File
+## Run a PraxLang Script
 
-PraxLang source files use the:
-
-```text
-.pra
-```
-
-extension.
-
-Example file:
-
-```text
-hello.pra
-```
-
-```prax
-V result = 1
-
-FOR i = 1 TO 5 THEN
-    V result = result * i
-    PRINT result
-END
-```
-
-Run it with:
+You can execute `.pra` source files directly:
 
 ```bash
-python praxlang.py hello.pra
+python praxlang.py examples/hello.pra
 ```
 
----
-
-## 🛠️ Project Structure
-
-The project is currently intentionally compact while the language is being developed.
+Example:
 
 ```text
-PraxLang/
-│
-├── praxlang.py
-├── *.pra
-├── README.md
-└── ...
+[OUTPUT] Hello from PraxLang!
 ```
 
-The main implementation currently contains the major components of the language:
+---
+
+# 🛣️ Roadmap & Limitations
+
+PraxLang is primarily an educational project and is still experimental.
+
+Potential future improvements include:
+
+- [ ] String literals and string manipulation
+- [ ] Explicit `RETURN` statements
+- [ ] `BREAK` and `CONTINUE`
+- [ ] User-defined data structures
+- [ ] HashMap / dictionary support
+- [ ] More complete standard-library functionality
+- [ ] Static type-checking pass over the AST
+- [ ] Bytecode compiler
+- [ ] Virtual Machine (VM)
+- [ ] Language Server Protocol (LSP)
+- [ ] Editor syntax highlighting
+- [ ] Improved module/import system
+- [ ] Better runtime diagnostics
+
+---
+
+# 🎯 Why PraxLang?
+
+PraxLang started as an experiment to understand what happens between writing code and actually executing it.
+
+Instead of relying on existing language infrastructure, the project explores the process directly:
 
 ```text
-Tokens
-   ↓
-Lexer
-   ↓
-AST Nodes
-   ↓
-Parser
-   ↓
-Symbol Table
-   ↓
-Interpreter
-   ↓
-REPL / File Runner
-```
-
----
-
-## 📚 Language Design
-
-PraxLang is not intended to imitate an existing language exactly.
-
-The syntax is deliberately experimental.
-
-For example, variable declarations use:
-
-```prax
-V x = 10
-```
-
-rather than traditional declarations such as:
-
-```text
-var x = 10
-```
-
-The project is primarily an exploration of:
-
-- Language design
-- Lexing
-- Parsing
-- AST construction
-- Interpreters
-- Runtime environments
-- Scope
-- Error handling
-- Control flow
-
----
-
-## 🚧 Current Limitations
-
-PraxLang is still a small experimental language.
-
-It currently does **not** aim to provide the feature set or performance of production languages such as C++, Java, Python, Rust, or Go.
-
-Some areas are still limited, including:
-
-- Type system
-- Standard library
-- String literal support
-- More advanced data structures
-- More complete function semantics
-- Advanced runtime features
-- Optimisation
-- Bytecode generation
-- Native compilation
-- Tooling / IDE integration
-- Package management
-
-These limitations are intentional at this stage of development.
-
-The goal is to understand the fundamentals before attempting more advanced language infrastructure.
-
----
-
-## 🗺️ Possible Future Development
-
-Potential future directions include:
-
-- String literals
-- More complete list operations
-- `BREAK`
-- `CONTINUE`
-- Return statements
-- Better function semantics
-- User-defined data structures
-- Better type checking
-- Standard library
-- Improved error messages
-- Modules
-- Bytecode VM
-- Compiler backend
-- Native executable generation
-- Syntax highlighting
-- Language Server Protocol support
-
----
-
-## 🎯 Why This Project Exists
-
-PraxLang started as an experiment in understanding what actually happens between source code and execution.
-
-Instead of only learning programming languages as a user, this project explores the machinery behind them:
-
-```text
-Source Code
-    ↓
-Lexing
+Characters
     ↓
 Tokens
     ↓
-Parsing
+Syntax
     ↓
 AST
     ↓
+Environment
+    ↓
 Interpretation
     ↓
-Execution
+Output
 ```
 
-Building each part manually provides a practical way to understand concepts that are normally hidden behind compilers and interpreters.
+Building these components from scratch provides a practical understanding of concepts such as:
 
----
-
-## 📌 Project Status
-
-**Status: Experimental / Educational**
-
-PraxLang is currently a working interpreted language with its own:
-
-- Lexer
-- Parser
-- AST
-- Interpreter
+- Lexical analysis
+- Parsing
+- Abstract Syntax Trees
+- Expression evaluation
+- Scope and environments
 - Symbol tables
-- Functions
-- Control flow
-- Lists
-- Error handling
-- REPL
-- `.pra` source files
-
-The language is considered a learning project rather than a production programming language.
+- Function calls
+- Runtime errors
+- Interpreter architecture
 
 ---
 
-## 👤 Author
+# 👤 Author
 
 **Prabuddha Pal**
 
-Built as a personal exploration of programming language implementation, interpreters, and language design.
+- GitHub: [@prabuddha34](https://github.com/prabuddha34)
 
 ---
 
-## 📜 License
+# 📜 License
 
-This project is intended as an educational and experimental programming-language project.
+PraxLang is distributed under the **MIT License**.
+
+See the [LICENSE](LICENSE) file for more information.
