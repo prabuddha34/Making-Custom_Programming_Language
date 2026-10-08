@@ -60,7 +60,8 @@ KEYWORDS=[
     "WHILE",
     "PRINT",
     "print",
-    "Function"
+    "Function",
+    "END"
 
 ]
 #add some realtional and conditional ones in my language so get them ok?
@@ -97,7 +98,10 @@ TT_ABS='ABS'
 
 LETTERS=string.ascii_letters
 LETTERS_DIGITS=LETTERS+DIGITS
+#so see in my code base it can run only single statements but now we want it to run multiple line \n values!
 
+#get the token of the multiple line
+TT_MULLine='TT_MULLine' #getting the multiline token !
 
 
 
@@ -202,13 +206,18 @@ class Lexer:
 
     def lets_cook_tokens(self):
 
-        tokens = []
-        errors = []
+        tokens = [] #get it empty lol
+        errors = []#again boring !
 
-        while self.curr != None:
+        while self.curr != None: #if there is nothing then do it !
 
-            if self.curr in ' \t\n':
+            if self.curr in ' \t':#stops this skipping lol !
                 self.advance()
+
+            elif self.curr in '\n;':
+
+                tokens.append(Token(TT_MULLine, '\n', self.line, self.column))
+                self.advance() #getting the multline for it !
 
             elif self.curr == '+':
 
@@ -519,7 +528,7 @@ class Lexer:
 
         return Token(TT_GT, '>', line, col)
 
-#we can dance and we can jive !
+    #we can dance and we can jive !
 
 
 
@@ -620,6 +629,10 @@ class IfNode:
 
     def __repr__(self):
         return f'(if {self.cases} else {self.else_case})' #return th value expression that we are getting !
+
+class StatementNode: #here we can get the nodes i mean to make it multline !
+    def __init__(self,statement):
+        self.statement=statement #construnctor of it !
 
 
 class NumberNodes:  # Hey lol so this is for th Numbers in our language
@@ -843,7 +856,7 @@ class Parser:
             self.advance() #skip the ]
 
             return res.success(ListNode(elements, tok.line, tok.column))
- #so now i have to go to the power() function to correct my parser
+        #so now i have to go to the power() function to correct my parser
 
 
 
@@ -986,7 +999,7 @@ class Parser:
 
         self.advance() #skip the THEN
 
-        body = res.registers(self.expr())
+        body = res.registers(self.block())
         if res.error: return res
 
         cases.append((condition.node, body.node))
@@ -1005,7 +1018,7 @@ class Parser:
 
             self.advance()
 
-            body = res.registers(self.expr())
+            body = res.registers(self.block())
             if res.error: return res
 
             cases.append((condition.node, body.node))
@@ -1014,7 +1027,7 @@ class Parser:
 
             self.advance() #skip the ELSE
 
-            else_body = res.registers(self.expr())
+            else_body = res.registers(self.block())
             if res.error: return res
 
             else_case = else_body.node
@@ -1091,7 +1104,7 @@ class Parser:
 
         self.advance()
 
-        body=res.registers(self.expr())
+        body=res.registers(self.block())
         if res.error:return res
 
         return res.success(
@@ -1133,7 +1146,7 @@ class Parser:
 
         self.advance()
 
-        body=res.registers(self.expr())
+        body=res.registers(self.block())
         if res.error:return res
 
         return res.success(
@@ -1219,7 +1232,7 @@ class Parser:
 
         self.advance()
 
-        body=res.registers(self.expr())
+        body=res.registers(self.block())
         if res.error:return res
 
         return res.success(
@@ -1229,6 +1242,60 @@ class Parser:
                 body.node
             )
         )
+
+    def statements(self, stop=()): #getting the pass of it so that we can add it !
+        res=ParserResult() #gettting the parser results!
+
+        stmts=[]
+        #loop it till it is true !
+        while True:
+            while self.current_tok.type ==TT_MULLine:
+                self.advance()
+
+            #stop at the end of the file or at END / ELIF / ELSE
+            if self.current_tok.type==TT_EOF or any(self.current_tok.matches(TT_KEYWORD,w) for w in stop):
+                break
+
+            stmt=res.registers(self.expr())
+            if res.error:return res
+            stmts.append(stmt.node)
+
+            #two statements on the same line is not allowed
+            if self.current_tok.type not in (TT_MULLine,TT_EOF) and not any(self.current_tok.matches(TT_KEYWORD,w) for w in stop):
+                return res.failure(
+                    InvalidSyntaxError(
+                        "Expected a new line",
+                        self.current_tok.line,
+                        self.current_tok.column
+                    )
+                )
+
+        return res.success(StatementNode(stmts))
+
+    def block(self):
+        res=ParserResult()
+
+        #same line --> one expression like before
+        if self.current_tok.type!=TT_MULLine:
+            return self.expr()
+
+        #new line --> take the statements till END / ELIF / ELSE
+        body=res.registers(self.statements(("END","ELIF","ELSE")))
+        if res.error:return res
+
+        if self.current_tok.matches(TT_KEYWORD,"END"):
+            self.advance()
+
+        elif self.current_tok.type==TT_EOF:
+            return res.failure(
+                InvalidSyntaxError(
+                    "Missing END",
+                    self.current_tok.line,
+                    self.current_tok.column
+                )
+            )
+
+        return res.success(body.node)
 
     def cubeatom(self):
 
@@ -1577,7 +1644,7 @@ class Parser:
 
     def parse(self):
 
-        res = self.expr()
+        res = self.statements()
 
         if res.error:
             return res
@@ -1661,6 +1728,9 @@ class Interpreter:
 
         if isinstance(value, str):
             return TYPE_STRING
+
+        if isinstance(value, list):
+            return "LIST"
 
         if isinstance(value, Function):
             return "FUNCTION"
@@ -1763,7 +1833,7 @@ class Interpreter:
             current += node.step_value #taking the current val!and adding in it!
 
         return result #ewturn thr result
-#vising the while node of the value !
+    #vising the while node of the value !
     def visitWhileNode(self, node):
 
         result = None
@@ -1772,7 +1842,16 @@ class Interpreter:
 
             result = self.visit(node.body_Node)
 
-            return result
+        return result
+
+    def visitStatementNode(self, node):
+
+        result = None
+
+        for stmt in node.statement:
+            result = self.visit(stmt)
+
+        return result
 
     def visitListNode(self, node):
 
@@ -2009,35 +2088,30 @@ def run(text):
 ##########################
 def run_file(filename):
 
-    if not filename.endswith(".prax"):
-        print("PraxLang files must end with .prax")
+    if not filename.endswith(".pra"):
+        print("PraxLang files must end with .pra")
         return
 
     try:
         with open(filename, "r", encoding="utf-8") as f:
-            lines = f.readlines()
+            text = f.read()
     except FileNotFoundError:
         print(f"File '{filename}' not found")
         return
 
-    for file_line, line in enumerate(lines, start=1):
+    result, errors = run(text)
 
-        if line.strip() == "":
-            continue
+    if errors:
+        for error in errors:
+            print(
+                f"\033[91m[ERROR]\033[0m "
+                f"{error.as_String()} "
+                f"[{filename}]"
+            )
+        return
 
-        result, errors = run(line)
-
-        if errors:
-            for error in errors:
-                print(
-                    f"\033[91m[ERROR]\033[0m "
-                    f"{error.as_String()} "
-                    f"[{filename}, file line {file_line}]"
-                )
-            return #stop at the first error
-
-        if result is not None:
-            print(result)
+    if result is not None:
+        print(result)
 
 #making a function so that i can have my own extenstion !
 def repl():

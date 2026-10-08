@@ -1,0 +1,11 @@
+V result = 1
+
+FOR i=1 TO 5 THEN
+    V result = result * i
+    PRINT result
+END
+
+V a=[1,2,3,4]
+print a
+print 1+2
+print 3
